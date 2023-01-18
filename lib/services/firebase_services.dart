@@ -13,6 +13,7 @@ import '../pages/chat/chat_home.dart';
 class FirebaseServices {
   CollectionReference users = FirebaseFirestore.instance.collection('users');
   CollectionReference cart = FirebaseFirestore.instance.collection('cart');
+  CollectionReference groups = FirebaseFirestore.instance.collection('groups');
 
   var uuid = '';
   createUser(String emailAddress, String password) async {

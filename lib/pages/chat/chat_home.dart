@@ -49,90 +49,33 @@ class _ChatHomeState extends State<ChatHome> {
             .update({"status": false});
         return true;
       },
-      child: Scaffold(
-        appBar: AppBar(
-          leading: Container(),
-          title: const Text("Chat"),
-          actions: [
-            IconButton(
-                onPressed: () {
-                  context.go('/');
-                },
-                icon: Icon(Icons.logout))
-          ],
-        ),
-        body: FutureBuilder(
-          future: FirebaseServices().users.get(),
-          builder: (BuildContext context,
-              AsyncSnapshot<QuerySnapshot<Object?>> snapshot) {
-            if (snapshot.hasData) {
-              return ListView.builder(
-                padding: const EdgeInsets.all(15),
-                itemCount: snapshot.data!.docs.length,
-                itemBuilder: (context, index) => FirebaseAuth
-                            .instance.currentUser!.email !=
-                        snapshot.data?.docs[index]['email']
-                    ? Card(
-                        margin: const EdgeInsets.only(bottom: 15),
-                        child: ListTile(
-                          onTap: () async {
-                            for (int i = 0;
-                                i <= snapshot.data!.docs.length - 1;
-                                i++) {
-                              if (currentuser!.email ==
-                                  snapshot.data?.docs[i]['email']) {
-                                currentuserId = snapshot.data?.docs[i]['id'];
-                                // print(currentuserId);
-                              }
-                            }
-                            print(currentuserId);
-
-                            await ChatService().createChat(
-                                currentuserId > snapshot.data?.docs[index]['id']
-                                    ? "$currentuserId-${snapshot.data?.docs[index]['id']}"
-                                    : "${snapshot.data?.docs[index]['id']}-$currentuserId",
-                                currentuser!.email,
-                                snapshot.data?.docs[index]['email']);
-                            context.pushNamed('oneOnone', queryParams: {
-                              'username': snapshot.data?.docs[index]
-                                  ['username'],
-                              'email': snapshot.data?.docs[index]['email'],
-                              'chatDoc': currentuserId >
-                                      snapshot.data?.docs[index]['id']
-                                  ? "$currentuserId-${snapshot.data?.docs[index]['id']}"
-                                  : "${snapshot.data?.docs[index]['id']}-$currentuserId",
-                              'pushToken': snapshot.data?.docs[index]
-                                  ['pushToken'],
-                              'profilePic': snapshot.data?.docs[index]
-                                  ['profile_img'],
-                            });
-                          },
-                          leading: CircleAvatar(
-                            radius: 20,
-                            backgroundColor: Colors.black45,
-                            backgroundImage: NetworkImage(
-                                snapshot.data?.docs[index]['profile_img']),
-                          ),
-                          title: Text(snapshot.data?.docs[index]['username']),
-                          subtitle: Text(snapshot.data?.docs[index]['email']),
-                          trailing: CircleAvatar(
-                            radius: 5,
-                            backgroundColor:
-                                snapshot.data?.docs[index]['status'] == true
-                                    ? Colors.green.shade300
-                                    : Colors.black45,
-                          ),
-                        ),
-                      )
-                    : Container(),
-              );
-            }
-
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          },
-        ),
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+            appBar: AppBar(
+              leading: Container(),
+              title: const Text("Chat"),
+              actions: [
+                IconButton(
+                    onPressed: () {
+                      context.go('/');
+                    },
+                    icon: Icon(Icons.logout))
+              ],
+              bottom: PreferredSize(
+                  child: TabBar(tabs: [
+                    Tab(
+                      text: 'People',
+                      icon: Icon(Icons.person),
+                    ),
+                    Tab(
+                      text: 'Groups',
+                      icon: Icon(Icons.group),
+                    ),
+                  ]),
+                  preferredSize: Size(double.infinity, 60)),
+            ),
+            body: TabBarView(children: [_buildPeopleTab(), _buildGroupsTab()])),
       ),
     );
   }
@@ -145,5 +88,116 @@ class _ChatHomeState extends State<ChatHome> {
         .doc(FirebaseAuth.instance.currentUser?.email)
         .update({"status": false});
     super.dispose();
+  }
+
+  _buildPeopleTab() {
+    return FutureBuilder(
+      future: FirebaseServices().users.get(),
+      builder: (BuildContext context,
+          AsyncSnapshot<QuerySnapshot<Object?>> snapshot) {
+        if (snapshot.hasData) {
+          return ListView.builder(
+            padding: const EdgeInsets.all(15),
+            itemCount: snapshot.data!.docs.length,
+            shrinkWrap: true,
+            itemBuilder: (context, index) => FirebaseAuth
+                        .instance.currentUser!.email !=
+                    snapshot.data?.docs[index]['email']
+                ? Card(
+                    margin: const EdgeInsets.only(bottom: 15),
+                    child: ListTile(
+                      onTap: () async {
+                        for (int i = 0;
+                            i <= snapshot.data!.docs.length - 1;
+                            i++) {
+                          if (currentuser!.email ==
+                              snapshot.data?.docs[i]['email']) {
+                            currentuserId = snapshot.data?.docs[i]['id'];
+                            // print(currentuserId);
+                          }
+                        }
+                        print(currentuserId);
+
+                        await ChatService().createChat(
+                            currentuserId > snapshot.data?.docs[index]['id']
+                                ? "$currentuserId-${snapshot.data?.docs[index]['id']}"
+                                : "${snapshot.data?.docs[index]['id']}-$currentuserId",
+                            currentuser!.email,
+                            snapshot.data?.docs[index]['email']);
+                        context.pushNamed('oneOnone', queryParams: {
+                          'username': snapshot.data?.docs[index]['username'],
+                          'email': snapshot.data?.docs[index]['email'],
+                          'chatDoc': currentuserId >
+                                  snapshot.data?.docs[index]['id']
+                              ? "$currentuserId-${snapshot.data?.docs[index]['id']}"
+                              : "${snapshot.data?.docs[index]['id']}-$currentuserId",
+                          'pushToken': snapshot.data?.docs[index]['pushToken'],
+                          'profilePic': snapshot.data?.docs[index]
+                              ['profile_img'],
+                        });
+                      },
+                      leading: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.black45,
+                        backgroundImage: NetworkImage(
+                            snapshot.data?.docs[index]['profile_img']),
+                      ),
+                      title: Text(snapshot.data?.docs[index]['username']),
+                      subtitle: Text(snapshot.data?.docs[index]['email']),
+                      trailing: CircleAvatar(
+                        radius: 5,
+                        backgroundColor:
+                            snapshot.data?.docs[index]['status'] == true
+                                ? Colors.green.shade300
+                                : Colors.black45,
+                      ),
+                    ),
+                  )
+                : Container(),
+          );
+        }
+
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
+  }
+
+  _buildGroupsTab() {
+    return FutureBuilder(
+      future: FirebaseServices().groups.get(),
+      builder: (context, AsyncSnapshot<QuerySnapshot<Object?>> snapshot) {
+        if (snapshot.hasData) {
+          return ListView.builder(
+            shrinkWrap: true,
+            itemCount: snapshot.data!.docs.length,
+            padding: const EdgeInsets.all(15),
+            itemBuilder: (context, index) {
+              if (snapshot.data?.docs[index]['users']
+                  .contains(currentuser!.email)) {
+                return Card(
+                  // padding: EdgeInsets.all(10),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.black45,
+                      backgroundImage:
+                          NetworkImage(snapshot.data?.docs[index]['group_img']),
+                    ),
+                    title: Text(snapshot.data?.docs[index]['group_name']),
+                  ),
+                );
+              }
+
+              return Container();
+            },
+          );
+        }
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
   }
 }
