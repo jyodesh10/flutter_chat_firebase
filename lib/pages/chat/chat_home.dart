@@ -2,7 +2,9 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_chat_app/pages/auth/login.dart';
+import 'package:firebase_chat_app/pages/chat/group_chat.dart';
+import 'package:firebase_chat_app/pages/chat/widgets/floating_button.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -18,15 +20,31 @@ class ChatHome extends StatefulWidget {
   State<ChatHome> createState() => _ChatHomeState();
 }
 
-class _ChatHomeState extends State<ChatHome> {
+class _ChatHomeState extends State<ChatHome> with WidgetsBindingObserver {
+  AppLifecycleState? _lastLifecycleState;
+
   late int currentuserId;
+  var selectedProductImage = '';
+  final storageRef = FirebaseStorage.instance.ref();
+
+  final groupname = TextEditingController();
+
   @override
   void initState() {
+    WidgetsBinding.instance.addObserver(this);
+
     FirebaseServices()
         .users
         .doc(FirebaseAuth.instance.currentUser?.email)
         .update({"status": true});
     super.initState();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    setState(() {
+      _lastLifecycleState = state;
+    });
   }
 
   var chatDocs = [];
@@ -52,30 +70,41 @@ class _ChatHomeState extends State<ChatHome> {
       child: DefaultTabController(
         length: 2,
         child: Scaffold(
-            appBar: AppBar(
-              leading: Container(),
-              title: const Text("Chat"),
-              actions: [
-                IconButton(
-                    onPressed: () {
-                      context.go('/');
-                    },
-                    icon: Icon(Icons.logout))
-              ],
-              bottom: PreferredSize(
-                  child: TabBar(tabs: [
-                    Tab(
-                      text: 'People',
-                      icon: Icon(Icons.person),
-                    ),
-                    Tab(
-                      text: 'Groups',
-                      icon: Icon(Icons.group),
-                    ),
-                  ]),
-                  preferredSize: Size(double.infinity, 60)),
-            ),
-            body: TabBarView(children: [_buildPeopleTab(), _buildGroupsTab()])),
+          appBar: AppBar(
+            leading: Container(),
+            title: const Text("Chat"),
+            actions: [
+              IconButton(
+                  onPressed: () {
+                    context.go('/');
+                  },
+                  icon: const Icon(Icons.logout))
+            ],
+            bottom: const PreferredSize(
+                preferredSize: Size(double.infinity, 60),
+                child: TabBar(tabs: [
+                  Tab(
+                    text: 'People',
+                    icon: Icon(Icons.person),
+                  ),
+                  Tab(
+                    text: 'Groups',
+                    icon: Icon(Icons.group),
+                  ),
+                ])),
+          ),
+          body: TabBarView(children: [_buildPeopleTab(), _buildGroupsTab()]),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {
+              showDialog(
+                  context: context,
+                  builder: (context) {
+                    return const FloatingButton();
+                  });
+            },
+            child: const Icon(Icons.add),
+          ),
+        ),
       ),
     );
   }
@@ -83,6 +112,8 @@ class _ChatHomeState extends State<ChatHome> {
   @override
   void dispose() {
     print('disposed');
+    WidgetsBinding.instance.removeObserver(this);
+
     FirebaseServices()
         .users
         .doc(FirebaseAuth.instance.currentUser?.email)
@@ -91,8 +122,8 @@ class _ChatHomeState extends State<ChatHome> {
   }
 
   _buildPeopleTab() {
-    return FutureBuilder(
-      future: FirebaseServices().users.get(),
+    return StreamBuilder(
+      stream: FirebaseServices().users.snapshots(),
       builder: (BuildContext context,
           AsyncSnapshot<QuerySnapshot<Object?>> snapshot) {
         if (snapshot.hasData) {
@@ -165,8 +196,8 @@ class _ChatHomeState extends State<ChatHome> {
   }
 
   _buildGroupsTab() {
-    return FutureBuilder(
-      future: FirebaseServices().groups.get(),
+    return StreamBuilder(
+      stream: FirebaseServices().groups.snapshots(),
       builder: (context, AsyncSnapshot<QuerySnapshot<Object?>> snapshot) {
         if (snapshot.hasData) {
           return ListView.builder(
@@ -174,23 +205,43 @@ class _ChatHomeState extends State<ChatHome> {
             itemCount: snapshot.data!.docs.length,
             padding: const EdgeInsets.all(15),
             itemBuilder: (context, index) {
-              if (snapshot.data?.docs[index]['users']
-                  .contains(currentuser!.email)) {
-                return Card(
-                  // padding: EdgeInsets.all(10),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Colors.black45,
-                      backgroundImage:
-                          NetworkImage(snapshot.data?.docs[index]['group_img']),
-                    ),
-                    title: Text(snapshot.data?.docs[index]['group_name']),
+              final data = snapshot.data!.docs[index];
+              return Card(
+                child: ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                  leading: CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.black45,
+                    backgroundImage:
+                        NetworkImage(snapshot.data?.docs[index]['group_img']),
                   ),
-                );
-              }
-
-              return Container();
+                  title: Text(snapshot.data?.docs[index]['group_name']),
+                  trailing: snapshot.data!.docs[index]['members']
+                          .contains(currentuser?.email)
+                      ? const Text('')
+                      : TextButton(
+                          onPressed: () {
+                            ChatService().joinGroup(
+                                snapshot.data!.docs[index].id,
+                                currentuser?.email);
+                          },
+                          child: const Text('Join')),
+                  onTap: () {
+                    snapshot.data!.docs[index]['members']
+                            .contains(currentuser?.email)
+                        ? Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => GroupChat(
+                                data: snapshot.data!.docs[index],
+                              ),
+                            ))
+                        : Scaffold.of(context).showSnackBar(const SnackBar(
+                            content: Text('Not in theis group')));
+                  },
+                ),
+              );
             },
           );
         }

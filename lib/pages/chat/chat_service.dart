@@ -6,6 +6,7 @@ import '../../services/firebase_services.dart';
 
 class ChatService {
   CollectionReference chat = FirebaseFirestore.instance.collection('chat');
+  CollectionReference group = FirebaseFirestore.instance.collection('groups');
 
   createChat(chatDoc, user1, user2) async {
     // final data =await getChat();
@@ -27,6 +28,35 @@ class ChatService {
   sendmessage(chatDoc, receiver, sender, text, timeStamp, isImg, replyTo,
       {pushToken}) async {
     await chat.doc(chatDoc).collection('messages').doc().set({
+      'receiver': receiver,
+      'sender': sender,
+      'text': text,
+      'timeStamp': timeStamp,
+      'isImg': isImg,
+      'replyTo': replyTo,
+    });
+    FirebaseServices()
+        .sendNotificationApi(pushToken, 'Sent by : $sender', text);
+  }
+
+  createGroup(groupName, groupImg, createdBy) async {
+    await group.doc().set({
+      'group_name': groupName,
+      'group_img': groupImg,
+      'created_by': createdBy,
+      'members': [createdBy]
+    });
+  }
+
+  joinGroup(groupId, email) async {
+    await group.doc(groupId).update({
+      'members': FieldValue.arrayUnion([email])
+    });
+  }
+
+  sendGrpmessage(chatDoc, receiver, sender, text, timeStamp, isImg, replyTo,
+      {pushToken}) async {
+    await group.doc(chatDoc).collection('messages').doc().set({
       'receiver': receiver,
       'sender': sender,
       'text': text,
