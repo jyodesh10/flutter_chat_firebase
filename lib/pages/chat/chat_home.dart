@@ -237,8 +237,11 @@ class _ChatHomeState extends State<ChatHome> with WidgetsBindingObserver {
                                 data: snapshot.data!.docs[index],
                               ),
                             ))
-                        : Scaffold.of(context).showSnackBar(const SnackBar(
-                            content: Text('Not in theis group')));
+                        : ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Not in theis group')
+                          )
+                        );
                   },
                 ),
               );
