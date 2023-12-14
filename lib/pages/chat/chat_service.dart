@@ -25,7 +25,8 @@ class ChatService {
     // }
   }
 
-  sendmessage(chatDoc, receiver, sender, text, timeStamp, isImg, replyTo,
+  sendmessage(
+      chatDoc, receiver, sender, text, timeStamp, isImg, replyIsImg, replyTo,
       {pushToken}) async {
     await chat.doc(chatDoc).collection('messages').doc().set({
       'receiver': receiver,
@@ -33,10 +34,15 @@ class ChatService {
       'text': text,
       'timeStamp': timeStamp,
       'isImg': isImg,
+      'replyIsImg': replyIsImg,
       'replyTo': replyTo,
     });
     FirebaseServices()
         .sendNotificationApi(pushToken, 'Sent by : $sender', text);
+  }
+
+  deleteMsg(chatDoc, msg) async {
+    await chat.doc(chatDoc).collection('messages').doc(msg).delete();
   }
 
   createGroup(groupName, groupImg, createdBy) async {
@@ -54,7 +60,8 @@ class ChatService {
     });
   }
 
-  sendGrpmessage(chatDoc, receiver, sender, text, timeStamp, isImg, replyTo,
+  sendGrpmessage(
+      chatDoc, receiver, sender, text, timeStamp, isImg, replyIsImg, replyTo,
       {pushToken}) async {
     await group.doc(chatDoc).collection('messages').doc().set({
       'receiver': receiver,
@@ -62,9 +69,14 @@ class ChatService {
       'text': text,
       'timeStamp': timeStamp,
       'isImg': isImg,
+      'replyIsImg': replyIsImg,
       'replyTo': replyTo,
     });
     FirebaseServices()
         .sendNotificationApi(pushToken, 'Sent by : $sender', text);
+  }
+
+  deleteGrpMsg(chatDoc, msg) async {
+    await group.doc(chatDoc).collection('messages').doc(msg).delete();
   }
 }

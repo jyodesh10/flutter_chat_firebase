@@ -9,6 +9,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:photo_view/photo_view.dart';
 
 import 'chat_service.dart';
 
@@ -44,6 +45,7 @@ class _OneOnOneChatState extends State<OneOnOneChat> {
   double selectedProductSize = 0.1;
   bool isReply = false;
   String textToReplyTo = '';
+  bool replyIsImg = false;
   final msg = TextEditingController();
   bool runnning = false;
   final currentuser = FirebaseAuth.instance.currentUser;
@@ -81,6 +83,7 @@ class _OneOnOneChatState extends State<OneOnOneChat> {
                   // storageRef.child("chat/chatDoc/$name.jpg").getDownloadURL(),
                   DateTime.now().toLocal(),
                   true,
+                  false,
                   '',
                   pushToken: widget.pushToken));
         }
@@ -146,107 +149,103 @@ class _OneOnOneChatState extends State<OneOnOneChat> {
                                   FirebaseAuth.instance.currentUser!.email
                               ? Alignment.centerRight
                               : Alignment.centerLeft,
-                      child: PopupMenuButton(
-                        position: PopupMenuPosition.over,
-                        offset: const Offset(40, 40),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                        enabled: data[index]['sender'] ==
+                      child: Column(
+                        crossAxisAlignment: data[index]['sender'] ==
                                 FirebaseAuth.instance.currentUser!.email
-                            ? false
-                            : true,
-                        itemBuilder: (context) => [
-                          PopupMenuItem(
-                            value: 1,
-                            height: 40,
-                            child: Row(
-                              children: const [
-                                Icon(Icons.reply),
-                                SizedBox(
-                                  width: 10,
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
+                        children: [
+                          snapshot.data?.docs[index]['replyTo'] == ''
+                              ? Container()
+                              : Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 15, vertical: 10),
+                                  margin: const EdgeInsets.only(left: 40),
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(15),
+                                      color: Colors.grey.shade600),
+                                  child: snapshot.data?.docs[index]
+                                              ['replyIsImg'] ==
+                                          true
+                                      ? Image.network(
+                                          snapshot.data?.docs[index]['replyTo'],
+                                          height: 100,
+                                        )
+                                      : Text(snapshot.data?.docs[index]
+                                          ['replyTo']),
                                 ),
-                                Text("Reply")
-                              ],
-                            ),
-                            onTap: () {
-                              // print(snapshot.data?.docs[index]['replyTo']);
-                              setState(() {
-                                isReply = true;
-                                textToReplyTo =
-                                    //  "asdsad";
-                                    snapshot.data?.docs[index]['text'];
-                              });
-                            },
+                          Row(
+                            mainAxisAlignment: data[index]['sender'] ==
+                                    FirebaseAuth.instance.currentUser!.email
+                                ? MainAxisAlignment.end
+                                : MainAxisAlignment.start,
+                            children: [
+                              data[index]['sender'] ==
+                                      FirebaseAuth.instance.currentUser!.email
+                                  ? Container()
+                                  : GestureDetector(
+                                      onTap: () {
+                                        print('object');
+                                      },
+                                      child: SizedBox(
+                                        child: CircleAvatar(
+                                          radius: 15,
+                                          backgroundImage: NetworkImage(
+                                              widget.profilePic.toString()),
+                                        ),
+                                      ),
+                                    ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              //message box
+                              Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 15, vertical: 10),
+                                  margin: const EdgeInsets.only(bottom: 5),
+                                  decoration: BoxDecoration(
+                                      color: data[index]['sender'] ==
+                                              FirebaseAuth
+                                                  .instance.currentUser!.email
+                                          ? Colors.purple
+                                          : Colors.blue,
+                                      borderRadius: BorderRadius.circular(15).copyWith(
+                                          topLeft: data[index]['receiver'] ==
+                                                  FirebaseAuth.instance
+                                                      .currentUser!.email
+                                              ? const Radius.circular(0)
+                                              : const Radius.circular(15),
+                                          bottomRight: data[index]['sender'] ==
+                                                  FirebaseAuth.instance
+                                                      .currentUser!.email
+                                              ? const Radius.circular(0)
+                                              : const Radius.circular(15))),
+                                  child: snapshot.data?.docs[index]['isImg'] == false
+                                      ? Text(snapshot.data?.docs[index]['text'])
+                                      : SizedBox(
+                                          height: 150,
+                                          width: 150,
+                                          child: PhotoView(
+                                            imageProvider: NetworkImage(
+                                              snapshot.data?.docs[index]
+                                                  ['text'],
+                                            ),
+                                            loadingBuilder: (context, event) {
+                                              return const CircularProgressIndicator();
+                                            },
+                                          ),
+                                        )
+                                  //  Image.network(
+
+                                  //     snapshot.data?.docs[index]['text'],
+                                  //     // "https://firebasestorage.googleapis.com/v0/b/auth-3725d.appspot.com/o/images%2F25.jpg?alt=media&token=bc0677cb-437f-430b-aeb6-25ea79846a93",
+                                  //     height: 150,
+                                  //     fit: BoxFit.fitHeight,
+                                  //   ),
+                                  ),
+                            ],
                           ),
                         ],
-                        child: Column(
-                          crossAxisAlignment: data[index]['sender'] ==
-                                  FirebaseAuth.instance.currentUser!.email
-                              ? CrossAxisAlignment.end
-                              : CrossAxisAlignment.start,
-                          children: [
-                            snapshot.data?.docs[index]['replyTo'] == ''
-                                ? Container()
-                                : Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 15, vertical: 10),
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(15),
-                                        color: Colors.grey.shade600),
-                                    child: Text(
-                                        snapshot.data?.docs[index]['replyTo']),
-                                  ),
-                            Row(
-                              mainAxisAlignment: data[index]['sender'] ==
-                                      FirebaseAuth.instance.currentUser!.email
-                                  ? MainAxisAlignment.end
-                                  : MainAxisAlignment.start,
-                              children: [
-                                data[index]['sender'] ==
-                                        FirebaseAuth.instance.currentUser!.email
-                                    ? Container()
-                                    : CircleAvatar(
-                                        radius: 15,
-                                        backgroundImage: NetworkImage(
-                                            widget.profilePic.toString()),
-                                      ),
-                                const SizedBox(
-                                  width: 10,
-                                ),
-                                //message box
-                                Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 15, vertical: 10),
-                                    margin: const EdgeInsets.only(bottom: 5),
-                                    decoration: BoxDecoration(
-                                        color: data[index]['sender'] ==
-                                                FirebaseAuth
-                                                    .instance.currentUser!.email
-                                            ? Colors.purple
-                                            : Colors.blue,
-                                        borderRadius: BorderRadius.circular(15).copyWith(
-                                            topLeft: data[index]['receiver'] ==
-                                                    FirebaseAuth.instance
-                                                        .currentUser!.email
-                                                ? const Radius.circular(0)
-                                                : const Radius.circular(15),
-                                            bottomRight: data[index]['sender'] ==
-                                                    FirebaseAuth.instance
-                                                        .currentUser!.email
-                                                ? const Radius.circular(0)
-                                                : const Radius.circular(15))),
-                                    child: snapshot.data?.docs[index]['isImg'] == false
-                                        ? Text(snapshot.data?.docs[index]['text'])
-                                        : Image.network(
-                                            snapshot.data?.docs[index]['text'],
-                                            // "https://firebasestorage.googleapis.com/v0/b/auth-3725d.appspot.com/o/images%2F25.jpg?alt=media&token=bc0677cb-437f-430b-aeb6-25ea79846a93",
-                                            height: 150,
-                                            fit: BoxFit.fitHeight,
-                                          )),
-                              ],
-                            ),
-                          ],
-                        ),
                       ),
                     );
                   },
@@ -262,7 +261,13 @@ class _OneOnOneChatState extends State<OneOnOneChat> {
   buildBottomInput() {
     return Material(
       child: Container(
-        height: isReply ? 105 : 60,
+        height:
+
+            // isReply == true
+            //     ? 105
+            //     :
+            // replyIsImg
+            isReply == true ? 130 : 60,
         color: Colors.black26,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,7 +282,12 @@ class _OneOnOneChatState extends State<OneOnOneChat> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text("Reply To:"),
-                            Text(textToReplyTo),
+                            replyIsImg == true
+                                ? Image.network(
+                                    textToReplyTo,
+                                    height: 50,
+                                  )
+                                : Text(textToReplyTo),
                           ],
                         ),
                         IconButton(
@@ -322,6 +332,7 @@ class _OneOnOneChatState extends State<OneOnOneChat> {
                             msg.text,
                             DateTime.now().toLocal(),
                             false,
+                            replyIsImg,
                             textToReplyTo,
                             pushToken: widget.pushToken);
                         msg.clear();
@@ -332,6 +343,7 @@ class _OneOnOneChatState extends State<OneOnOneChat> {
                             currentuser!.email,
                             msg.text,
                             DateTime.now().toLocal(),
+                            false,
                             false,
                             '',
                             pushToken: widget.pushToken);

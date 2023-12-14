@@ -1,7 +1,8 @@
+import 'package:firebase_chat_app/pages/auth/login.dart';
+import 'package:firebase_chat_app/pages/notification/notificaiton_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../pages/auth/login.dart';
 import '../pages/chat/chat_home.dart';
 import '../pages/chat/one_on_one_chat.dart';
 
@@ -10,10 +11,16 @@ final GoRouter goRouter = GoRouter(
     GoRoute(
       path: '/',
       builder: (BuildContext context, GoRouterState state) {
+        return
+            //  const NotificationPage();
+            const LoginPage();
+      },
+      routes: const <RouteBase>[],
+    ),
+    GoRoute(
+      path: LoginPage.routename,
+      builder: (BuildContext context, GoRouterState state) {
         return const LoginPage();
-        // ChatHome();
-        // BlocHome();
-        // FetchApi();
       },
       routes: const <RouteBase>[],
     ),

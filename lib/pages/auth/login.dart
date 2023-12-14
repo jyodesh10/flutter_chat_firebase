@@ -6,13 +6,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../services/firebase_services.dart';
 import 'register.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
+  static const routename = '/login';
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -28,8 +28,8 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     FirebaseServices().getUsers();
     getFCMToken();
-    email.text = 'jyodeshshakya@gmail.com';
-    password.text = '123456';
+    // email.text = 'jyodeshshakya@gmail.com';
+    // password.text = '123456';
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       log('Got a message whilst in the foreground!');
@@ -41,7 +41,7 @@ class _LoginPageState extends State<LoginPage> {
 
   getFCMToken() async {
     final fcmToken = await FirebaseMessaging.instance.getToken();
-    log("Token : " + fcmToken.toString());
+    log("Token : $fcmToken");
     fireToken = fcmToken.toString();
   }
 
@@ -60,21 +60,6 @@ class _LoginPageState extends State<LoginPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // FutureBuilder(
-            //   future: FirebaseServices().users.get(),
-            //   builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-            //     if (snapshot.hasError) {
-            //       return Text('Eor');
-            //     }
-            //     if (snapshot.hasData) {
-            //       final allData =
-            //           snapshot.data!.docs.map((doc) => doc).toList();
-            //       return Text(allData[0].id.toString());
-            //     }
-            //     return CircularProgressIndicator();
-            //   },
-            // ),
-            Text(FirebaseServices().documents.length.toString()),
             const Text('Email'),
             TextField(
               controller: email,
@@ -112,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => RegisterPage(),
+                        builder: (context) => const RegisterPage(),
                       ));
                 })
           ],
