@@ -270,7 +270,7 @@ class _ChatHomeState extends State<ChatHome> with WidgetsBindingObserver {
                       ),
                     ],
                   ),
-                  child: Card(
+                child: Card(
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(
                           vertical: 15, horizontal: 10),
