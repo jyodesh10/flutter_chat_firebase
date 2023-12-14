@@ -4,7 +4,6 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 
@@ -80,7 +79,9 @@ class FirebaseServices {
       "password": password,
       "uuid": uuid,
       "profile_img": profileImg,
-      "id": id
+      "id": id,
+      'pushToken': '',
+      'status': false
     })
         // .add({
         //   'name': fullName, // John Doe
@@ -100,7 +101,6 @@ class FirebaseServices {
         documents.add(value.docs[i].id.toString());
       }
       print(documents.toString());
-
       // for (var element in value.docs) {
       //   documents.add(element.id);
       // }
@@ -190,5 +190,9 @@ class FirebaseServices {
     } on Exception catch (e) {
       log(e.toString());
     }
+  }
+
+  Future<void> deleteGrp(docID) async {
+    await groups.doc(docID).delete();
   }
 }

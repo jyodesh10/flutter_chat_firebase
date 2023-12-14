@@ -1,14 +1,13 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_chat_app/pages/auth/login.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../model/user_model.dart';
 import '../../services/firebase_services.dart';
-import 'login.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -50,9 +49,16 @@ class _RegisterPageState extends State<RegisterPage> {
         .snapshotEvents
         .listen((event) {
       if (event.state == TaskState.success) {
-        storageRef.child("user/$name.jpg").getDownloadURL().then((value) =>
-            FirebaseServices().addUser(username.text, email.text, password.text,
-                value, snapshot.data!.docs.length + 1));
+        print('success');
+        storageRef.child("user/$name.jpg").getDownloadURL().then((value) async {
+          await FirebaseServices().addUser(username.text, email.text,
+              password.text, value, snapshot.data!.docs.length + 1);
+          Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const LoginPage(),
+              ));
+        });
       }
     });
   }
@@ -122,16 +128,13 @@ class _RegisterPageState extends State<RegisterPage> {
                       child: const Text('SUBMIT'),
                       onPressed: () async {
                         await upoloadImg(email.text, snapshot);
+                        // await FirebaseServices()
+                        //     .createUser(email.text, password.text);
                         // FirebaseServices().addUser(
                         //     username.text,
                         //     email.text,
                         //     password.text,
                         //     snapshot.data!.docs.length + 1);
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => LoginPage(),
-                            ));
                       });
                 })
           ],
