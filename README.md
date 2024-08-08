@@ -1,5 +1,7 @@
 # firebase_chat_app
 
+<img src='/assets/logo.png' width=15% />
+
 Simple chat application using firebase messaging
 
 
